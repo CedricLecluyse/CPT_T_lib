@@ -420,8 +420,83 @@ class Tparameter_lib:
         
         
         return df_output
-        
 
+def CPT_optimize(self,Cmin=None, Cmax=None, DC=None, Lmin=None, Lmax=None, DL=None, Vin=None, Cm=None, Load=None, a=None, L=None, C=None, P_wheight=0.5, Eff_wheight=0.5, Max_Freq=3e6) :
+        '''
+        
+        Parameters
+        ----------
+        Cmin : TYPE, optional
+            DESCRIPTION. Minimum multiplication factor (Cmin * Cm)- The default is None.
+        Cmax : TYPE, optional
+            DESCRIPTION. Maximum multiplication factor (Cmax * Cm)- The default is None.
+        DC : TYPE, optional
+            DESCRIPTION. Stepsize multiplication factor, normalized value (DC * Cm) - the default is None.
+        Lmin : TYPE, optional
+            DESCRIPTION. Min inductance, normalized value (Lmin * 1*µH) - the default is None.
+        Lmax : TYPE, optional
+            DESCRIPTION. Max inductance, normalized value (Lmax * 1*µH)- the default is None.
+        DL : TYPE, optional
+            DESCRIPTION. Stepsize inductor, normalized value (DL * 1*µH) - the default is None.
+        Vin : TYPE, optional
+            DESCRIPTION. Input voltage, single value - the default is None.
+        Cm : TYPE, optional
+            DESCRIPTION. Coupling capacitance - the default is None.
+        Load : TYPE, optional
+            DESCRIPTION. Load CPT system, single value - the default is None.
+        a : TYPE, optional
+            DESCRIPTION. a : 0= primary L-compensation/ 1= Secondary L_compensation / 2= double sided L-compensation / 3= double sided LC-compensation 
+        L : TYPE, optional
+            DESCRIPTION. Dataframe of inductor measurements - the default is None.
+        x : TYPE, optional
+            DESCRIPTION. Value of measured inductor @1Mhz - the default is None.
+        C : TYPE, optional
+            DESCRIPTION. Compensation capacitor - the default is None.
+        P_wheight : TYPE, optional
+            DESCRIPTION. Power wheight factor - the default is 0.5.
+        Eff_wheight : TYPE, optional
+            DESCRIPTION. Efficiency wheight factor - the default is 0.5.
+        Max_Freq : TYPE, optional
+            DESCRIPTION. The default is 3 MHz, give value in Hertz.
+
+        Returns
+        -------
+        Output power df_Pout; Efficiency df_eff; Best combination optmimum
+        df_Pout & df_eff is multiindex dataframe with al output and efficiencies for al given combinations of L & C
+        '''
+        
+        df_output=pd.DataFrame(index=self.f)
+        
+        # optimum=[]
+        
+        clmn_C=[]
+        for i in np.arange(Cmin,Cmax,DC):clmn_C.append('C_'+str(round(i,2)))
+        # for i in np.arange(1,4):clmn_C.append('C_'+str(round(i,2)))
+        clmn_L=[]
+        for j in np.arange(Lmin,Lmax,DL):clmn_L.append('L_'+str(round(j,1)))
+        # for j in np.arange(1,50:clmn_L.append('L_'+str(round(j,1)))
+        
+        mux= pd.MultiIndex.from_product([clmn_C,clmn_L])
+        df_Pout= pd.DataFrame(index= self.f, columns=mux)
+        df_eff= pd.DataFrame(index= self.f, columns=mux)
+        
+        
+        
+        for i in np.arange(Cmin,Cmax,DC):#change C
+            print('C= '+str(i)) 
+            Ci= C.copy()
+            Ci.C=C.C*i
+            # print(Ci.C)
+            # print(C.C)
+            for j in np.arange(Lmin,Lmax,DL): #change L
+                print('L= '+str(j)) 
+                df_output = self.CPT_System(V_in=Vin, L1=L*j, L2=L*j, C1=Ci, C2=Ci, Cm=Cm, Load=Load, a=a, opt=True)
+                
+                df_Pout.loc[:,('C_'+str(round(i,2)),'L_'+str(round(j,1)))]= df_output.P_out
+                df_eff.loc[:,('C_'+str(round(i,2)),'L_'+str(round(j,1)))]= df_output.eff
+              
+        return df_Pout, df_eff
+            
             
 
             
