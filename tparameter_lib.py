@@ -3,7 +3,7 @@
 Created on Tue Nov  7 16:48:15 2023
 
 @author: Cedric Lecluyse
-Library file based on unpulished IEEE ECCE paper
+Library file based on accepted IEEE ECCE paper
 """
 import numpy as np
 import pandas as pd
