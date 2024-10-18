@@ -44,3 +44,55 @@ T= tpr(f)
 
 df_sys= T.CPT_System(V_in,L1=L, L2=L, C1=C, C2=C, Cm=Cm, Load= R, a=3)
 df_sys.P_out.plot()
+
+# Optimized system:
+df_Popt= pd.DataFrame(index=f)
+Pmax= pd.DataFrame(index=f)
+df_EffOpt= pd.DataFrame(index=f)
+eff_max= pd.DataFrame(index=f)
+
+df_Popt,df_EffOpt= T.CPT_optimize(Cmin=100, Cmax=1100, DC=100, Lmin=1, Lmax=21, DL=1, Vin=V_in, Cm=Cm, Load=Load, a=3, L=L, C=C)
+df_Popt.columns.names= ['Capacitance', 'Inductance']
+df_EffOpt.columns.names= ['Capacitance', 'Inductance']
+
+Ltemp=[]
+Ctemp=[]
+df_P= df_Popt.max().unstack(level='Inductance')
+df_Eff= df_EffOpt.max().unstack(level='Inductance')
+for i in df_P.columns:
+   Ltemp.append(int(i[2:]))
+for j in df_P.index:
+    Ctemp.append(int(j[2:]))
+
+df_P.index= Ctemp
+df_P.columns= Ltemp
+df_Eff.index= Ctemp
+df_Eff.columns= Ltemp
+
+df_P= df_P.sort_index()
+df_P= df_P.sort_index(axis=1)
+df_Eff= df_Eff.sort_index()
+df_Eff= df_Eff.sort_index(axis=1)
+
+'''
+Give equal weight to Pout and Efficiency. This is done by dividing Pout by the maximum value
+in the data frame. The same goes for efficiency. The optimum point between Pout and Efficiency
+can now be found by summing the two data frames and dividing by 2. This gives maximum power at maximum efficiency.
+'''
+df_Popt=df_Popt[df_Popt>100]
+df_Popt.fillna(0, inplace=True)
+wheight_Pout= df_Popt/(df_Popt.max().max())
+wheight_eff= abs(df_EffOpt)/(abs(df_EffOpt).max().max())
+#%%
+opti= wheight_Pout+wheight_eff
+opti_2= opti.loc[:2000000]
+
+opti_max= opti.max()
+opti_max.fillna(0, inplace=True)
+opti_max= opti_max.unstack(level='Inductance')
+print('Optimal combination: '+str(opti_max.stack().idxmax()) + 'No frequency restriction')
+opti_max2= opti_2.max()
+opti_max2.fillna(0, inplace=True)
+opti_max2= opti_max2.unstack(level='Inductance')
+print('Optimal combination: '+str(opti_max2.stack().idxmax()) + 'Max 2MHz')
+
